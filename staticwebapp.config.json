@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "routes": [
+    {
+      "route": "/",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/submit*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/track*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/kaizen",
+      "methods": ["POST"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/kaizen/track",
+      "methods": ["GET"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/export",
+      "methods": ["GET"],
+      "allowedRoles": ["admin"]
+    },
+    {
+      "route": "/api/kaizen/*",
+      "methods": ["DELETE"],
+      "allowedRoles": ["admin"]
+    },
+    {
+      "route": "/review*",
+      "allowedRoles": ["reviewer", "admin"]
+    },
+    {
+      "route": "/dashboard*",
+      "allowedRoles": ["reviewer", "admin"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["reviewer", "admin"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/api/*",
+      "/images/*",
+      "*.{png,jpg,jpeg,gif,svg,ico,webp,css,js,map,json,woff,woff2,ttf}"
+    ]
+  },
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=.referrer",
+      "statusCode": 302
+    },
+    "403": {
+      "rewrite": "/index.html",
+      "statusCode": 403
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(self), microphone=()",
+    "Content-Security-Policy": "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:; font-src 'self' https: data: fonts.gstatic.com;"
+  },
+  "mimeTypes": {
+    ".json": "application/json"
+  }
+}

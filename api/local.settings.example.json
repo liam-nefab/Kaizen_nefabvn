@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AZURE_TENANT_ID": "00000000-0000-0000-0000-000000000000",
+    "AZURE_CLIENT_ID": "00000000-0000-0000-0000-000000000000",
+    "AZURE_CLIENT_SECRET": "your-entra-id-client-secret",
+    "SP_SITE_ID": "yourcompany.sharepoint.com,guid1,guid2",
+    "SP_LIST_NAME": "KaizenIdeas",
+    "SP_DRIVE_NAME": "KaizenImages"
+  }
+}

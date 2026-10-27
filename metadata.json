@@ -1,0 +1,6 @@
+{
+  "name": "Nefab Kaizen Portal",
+  "description": "Hệ thống thu thập, thẩm định và thống kê ý tưởng Kaizen cho nhà máy Nefab",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
