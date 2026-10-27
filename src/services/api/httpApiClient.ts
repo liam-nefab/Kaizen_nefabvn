@@ -39,29 +39,55 @@ export class HttpApiClient implements IKaizenApiClient {
     return (await res.json()) as T;
   }
 
-  async submitKaizen(input: KaizenSubmitInput): Promise<SubmitResponse> {
-    const payload = {
-      submitDate: input.submitDate,
-      topic: input.topic,
-      employeeId: input.employeeId,
-      department: input.department,
-      ideaName: input.ideaName,
-      category: input.category,
-      currentState: input.currentState,
-      rootCause: input.rootCause,
-      benefit: input.benefit,
-      savingAmount: input.savingAmount,
-      beforeImage: input.beforeImage,
-      afterImage: input.afterImage,
-      honeypot: input.honeypot,
-      idempotencyKey: input.idempotencyKey,
-    };
 
-    return this.request<SubmitResponse>('/api/kaizen', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+async submitKaizen(input: KaizenSubmitInput): Promise<SubmitResponse> {
+  const url = import.meta.env.VITE_APPS_SCRIPT_URL;
+
+  if (!url) {
+    throw new Error('Chưa cấu hình URL Google Apps Script');
   }
+
+  const payload = {
+    action: 'submit',
+    submitDate: input.submitDate,
+    topic: input.topic,
+    employeeId: input.employeeId,
+    department: input.department,
+    ideaName: input.ideaName,
+    category: input.category,
+    currentState: input.currentState,
+    rootCause: input.rootCause,
+    benefit: input.benefit,
+    savingAmount: input.savingAmount,
+    beforeImage: input.beforeImage,
+    afterImage: input.afterImage,
+    honeypot: input.honeypot,
+    idempotencyKey: input.idempotencyKey,
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Lỗi máy chủ (${res.status})`);
+  }
+
+  const result = await res.json();
+
+  if (!result.ok) {
+    throw new Error(
+      result.error?.message || 'Không gửi được ý tưởng Kaizen'
+    );
+  }
+
+  return result.data as SubmitResponse;
+}
+
 
   async trackKaizen(code: string, employeeId: string): Promise<KaizenTrackResult | null> {
     const params = new URLSearchParams({
