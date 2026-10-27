@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/Kaizen_nefabvn/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
