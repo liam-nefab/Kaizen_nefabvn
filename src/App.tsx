@@ -17,7 +17,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Kaizen_nefabvn">
       <AuthProvider>
         <ToastProvider>
           <div className="min-h-screen flex flex-col bg-[#F5F7FA] text-slate-800 font-sans selection:bg-[#005EB8] selection:text-white">
