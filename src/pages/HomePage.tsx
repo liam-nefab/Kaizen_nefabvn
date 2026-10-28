@@ -39,7 +39,7 @@ export const HomePage: React.FC = () => {
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 bg-[#E8F1FB] border border-[#B8D5F5] px-3 py-1.5 rounded-full text-xs font-semibold text-[#005EB8]">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Nefab Continuous Improvement 2026</span>
+                <span>Nefab Continuous Improvement</span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
@@ -48,7 +48,7 @@ export const HomePage: React.FC = () => {
               </h1>
 
               <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
-                Cổng thu thập và tôn vinh sáng kiến Kaizen dành riêng cho công nhân viên Nefab Việt Nam. Gửi nhanh ngay trên điện thoại, không cần tài khoản, ghi nhận và khen thưởng minh bạch.
+                Cổng thu thập và đánh giá sáng kiến Kaizen dành riêng cho cán bộ công nhân viên Nefab Việt Nam. Gửi nhanh ngay trên điện thoại, không cần tài khoản.
               </p>
 
               {/* Action buttons */}
@@ -67,7 +67,7 @@ export const HomePage: React.FC = () => {
                   className="h-12 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm transition-all flex items-center justify-center gap-2 border border-slate-200"
                 >
                   <Search className="w-4 h-4 text-slate-500" />
-                  <span>Tra cứu trạng thái ý tưởng</span>
+                  <span>Tra cứu trạng thái Kaizen</span>
                 </Link>
               </div>
 
@@ -75,7 +75,7 @@ export const HomePage: React.FC = () => {
               <div className="pt-4 border-t border-slate-100 grid grid-cols-3 gap-4 text-xs text-slate-500 font-medium">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Gửi ẩn danh công khai</span>
+                  <span>Không cần đăng nhập</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-[#005EB8] shrink-0" />
@@ -99,10 +99,10 @@ export const HomePage: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex flex-col justify-end p-5 text-white">
                   <span className="text-xs uppercase font-bold tracking-widest text-amber-300">
-                    Bảng Kaizen Lean Manufacturing
+                    Bảng Kaizen
                   </span>
                   <p className="text-sm font-semibold mt-1">
-                    Nhà máy Bắc Ninh · Đà Nẵng · Đồng Nai
+                    Nhà máy Nefab Bắc Ninh
                   </p>
                   <p className="text-xs text-slate-300 mt-0.5">
                     Hơn 30+ sáng kiến đã thẩm định và ứng dụng thành công trong năm 2026
@@ -126,7 +126,7 @@ export const HomePage: React.FC = () => {
               <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">
                 {stats?.totalCount || 30}
               </div>
-              <p className="text-xs text-slate-500">Đã tiếp nhận toàn hệ thống</p>
+              <p className="text-xs text-slate-500">Đã tiếp nhận</p>
             </div>
 
             <div className="space-y-1 pt-4 lg:pt-0 lg:pl-6">
@@ -145,7 +145,7 @@ export const HomePage: React.FC = () => {
             <div className="space-y-1 pt-4 lg:pt-0 lg:pl-6">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <TrendingUp className="w-4 h-4 text-amber-600" />
-                <span>Tiết kiệm làm lợi</span>
+                <span>Giá trị tiết kiệm</span>
               </div>
               <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 font-mono tabular-nums">
                 {formatVND(stats?.totalSavings || 580000000)}
@@ -161,7 +161,7 @@ export const HomePage: React.FC = () => {
               <div className="text-2xl sm:text-3xl font-extrabold text-[#005EB8] font-mono tabular-nums">
                 {stats?.quarterlyAwardCount || 16}
               </div>
-              <p className="text-xs text-slate-500">Sáng kiến xuất sắc vào vòng chung khảo</p>
+              <p className="text-xs text-slate-500">Sáng kiến xuất sắc vào vòng thi Quý-Năm</p>
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export const HomePage: React.FC = () => {
             Làm thế nào để gửi một ý tưởng Kaizen?
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Thiết kế tối ưu cho công nhân thao tác nhanh gọn bằng điện thoại ngay tại chuyền
+            Thiết kế tối ưu cho CBNV thao tác nhanh gọn bằng điện thoại ngay tại chỗ
           </p>
         </div>
 
@@ -211,7 +211,7 @@ export const HomePage: React.FC = () => {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Bước 3</span>
             <h3 className="text-lg font-bold text-slate-900 mt-1 mb-2">Thẩm định & Nhận thưởng</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Nhận ngay mã Kaizen để tra cứu kết quả. Ban thẩm định đánh giá hàng tháng, chi trả thưởng và xét giải thưởng Kaizen xuất sắc của Quý.
+              Nhận ngay mã Kaizen để tra cứu kết quả. Ban Kaizen sẽ tiến hành đánh giá và chi trả thưởng hàng tháng. Kaizen xuất sắc sẽ vào vòng Quý - Năm.
             </p>
           </div>
         </div>
@@ -233,7 +233,7 @@ export const HomePage: React.FC = () => {
               onClick={() => navigate('/submit')}
               className="text-sm font-semibold text-[#005EB8] hover:text-[#00488F] flex items-center gap-1.5"
             >
-              <span>Xem mẫu đơn và nộp ngay</span>
+              <span>Xem mẫu đăng ký và nộp ngay</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
