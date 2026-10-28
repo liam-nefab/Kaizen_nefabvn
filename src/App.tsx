@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/common/Toast';
 import { Header } from './components/common/Header';
@@ -13,11 +13,14 @@ import { TrackPage } from './pages/TrackPage';
 import { ReviewListPage } from './pages/ReviewListPage';
 import { ReviewDetailPage } from './pages/ReviewDetailPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { DiagnosticsPage } from './pages/DiagnosticsPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/Kaizen_nefabvn">
+    <HashRouter>
       <AuthProvider>
         <ToastProvider>
           <div className="min-h-screen flex flex-col bg-[#F5F7FA] text-slate-800 font-sans selection:bg-[#005EB8] selection:text-white">
@@ -32,8 +35,10 @@ export default function App() {
                 <Route path="/submit" element={<SubmitPage />} />
                 <Route path="/submit/success" element={<SubmitSuccessPage />} />
                 <Route path="/track" element={<TrackPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/diagnostics" element={<DiagnosticsPage />} />
 
-                {/* Protected Routes (Yêu cầu tài khoản Microsoft Entra ID Reviewer/Admin) */}
+                {/* Protected Routes (Yêu cầu quyền Reviewer/Admin qua Passcode) */}
                 <Route
                   path="/review"
                   element={
@@ -59,8 +64,8 @@ export default function App() {
                   }
                 />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* 404 Not Found Friendly Page */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
 
@@ -72,6 +77,6 @@ export default function App() {
           </div>
         </ToastProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

@@ -2,6 +2,8 @@ import {
   IKaizenApiClient,
   SubmitResponse,
   KaizenListResponse,
+  LoginResponse,
+  PingResponse,
 } from './types';
 import {
   KaizenItem,
@@ -523,6 +525,41 @@ export class MockApiClient implements IKaizenApiClient {
       [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
 
     return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  }
+  async login(passcode: string, name?: string): Promise<LoginResponse> {
+    await new Promise((r) => setTimeout(r, 200));
+    const trimmed = passcode.trim();
+    if (trimmed === 'admin2026' || trimmed === 'admin') {
+      this.setActiveRole('admin');
+      return {
+        token: 'mock-token-admin-' + Date.now(),
+        role: 'admin',
+        name: name || 'Quản trị viên (Demo)',
+        expiresAt: Date.now() + 6 * 60 * 60 * 1000,
+      };
+    }
+    if (trimmed === 'nefab2026' || trimmed === 'reviewer') {
+      this.setActiveRole('reviewer');
+      return {
+        token: 'mock-token-reviewer-' + Date.now(),
+        role: 'reviewer',
+        name: name || 'Thẩm định viên (Demo)',
+        expiresAt: Date.now() + 6 * 60 * 60 * 1000,
+      };
+    }
+    throw new Error(
+      'Mã truy cập không chính xác. Thử "nefab2026" cho Thẩm định viên hoặc "admin2026" cho Quản trị viên.'
+    );
+  }
+
+  async ping(): Promise<PingResponse> {
+    await new Promise((r) => setTimeout(r, 100));
+    return {
+      status: 'ok',
+      time: new Date().toISOString(),
+      version: 'Mock-1.0',
+      configuredSheets: true,
+    };
   }
 
   async getCurrentUser(): Promise<UserPrincipal | null> {

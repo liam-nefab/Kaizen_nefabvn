@@ -2,6 +2,8 @@ import {
   IKaizenApiClient,
   SubmitResponse,
   KaizenListResponse,
+  LoginResponse,
+  PingResponse,
 } from './types';
 import {
   KaizenItem,
@@ -13,171 +15,217 @@ import {
   UserPrincipal,
 } from '../../types/kaizen';
 
-export class HttpApiClient implements IKaizenApiClient {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const res = await fetch(endpoint, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
-    });
+const AUTH_STORAGE_KEY = 'nefab_kaizen_auth_v1';
 
-    if (!res.ok) {
-      let errMsg = `Lỗi máy chủ (${res.status})`;
-      try {
-        const data = await res.json();
-        if (data?.error?.message) {
-          errMsg = data.error.message;
-        }
-      } catch {
-        // fallback
+export class HttpApiClient implements IKaizenApiClient {
+  private getAuthToken(): string | null {
+    try {
+      const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.expiresAt && Date.now() > data.expiresAt) {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        return null;
       }
+      return data.token || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getAppsScriptUrl(): string {
+    const url = import.meta.env.VITE_APPS_SCRIPT_URL?.trim();
+    if (!url) {
+      throw new Error(
+        'Chưa cấu hình URL Google Apps Script (biến VITE_APPS_SCRIPT_URL trong file .env).'
+      );
+    }
+    if (url.includes('/dev')) {
+      console.warn(
+        '[CẢNH BÁO] URL Apps Script đang dùng chế độ /dev. Trình duyệt ngoài sẽ gặp lỗi đăng nhập Google. Hãy dùng URL triển khai chính thức dạng /exec!'
+      );
+    }
+    if (url.includes('/u/1/') || url.includes('/u/2/')) {
+      console.warn(
+        '[CẢNH BÁO] URL Apps Script chứa tiền tố tài khoản nhiều người dùng (/u/1/). Hãy đổi thành URL chuẩn không chứa /u/x/.'
+      );
+    }
+    return url;
+  }
+
+  private async postAppsScript<T>(
+    action: string,
+    payload: any = {},
+    requireAuth = false
+  ): Promise<T> {
+    const url = this.getAppsScriptUrl();
+    const token = this.getAuthToken();
+
+    if (requireAuth && !token) {
+      throw new Error('Yêu cầu đăng nhập để thực hiện thao tác này');
+    }
+
+    const requestBody = {
+      action,
+      payload,
+      token: token || undefined,
+    };
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(requestBody),
+        redirect: 'follow',
+      });
+    } catch (networkErr: any) {
+      throw new Error(
+        `Không thể kết nối đến máy chủ Google Apps Script: ${networkErr?.message || 'Lỗi mạng hoặc CORS'}`
+      );
+    }
+
+    const text = await res.text();
+
+    // Phát hiện phản hồi HTML (thường do quyền truy cập chưa mở "Anyone" hoặc URL /dev)
+    const trimmed = text.trim();
+    if (
+      trimmed.startsWith('<!DOCTYPE') ||
+      trimmed.startsWith('<html') ||
+      trimmed.includes('accounts.google.com')
+    ) {
+      console.error('[DIAGNOSTICS] Máy chủ trả về trang HTML thay vì JSON:', trimmed.slice(0, 300));
+      throw new Error(
+        'Máy chủ Google trả về trang đăng nhập HTML thay vì dữ liệu JSON. Nguyên nhân: Web App chưa được phân quyền "Who has access: Anyone" (Bất kỳ ai) hoặc đang dùng link /dev. Vui lòng kiểm tra lại cấu hình Deploy trong Apps Script.'
+      );
+    }
+
+    let result: any;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      console.error('[PARSE ERROR] Dữ liệu trả về không phải JSON:', text.slice(0, 300));
+      throw new Error(`Phản hồi không hợp lệ từ máy chủ: ${text.slice(0, 100)}`);
+    }
+
+    if (!result || typeof result !== 'object') {
+      throw new Error('Dữ liệu trả về không hợp lệ');
+    }
+
+    if (!result.ok) {
+      const errMsg = result.error?.message || result.message || 'Thao tác không thành công';
       throw new Error(errMsg);
     }
 
-    return (await res.json()) as T;
+    return result.data as T;
   }
 
-
-async submitKaizen(input: KaizenSubmitInput): Promise<SubmitResponse> {
-  const url = import.meta.env.VITE_APPS_SCRIPT_URL;
-
-  if (!url) {
-    throw new Error('Chưa cấu hình URL Google Apps Script');
+  async submitKaizen(input: KaizenSubmitInput): Promise<SubmitResponse> {
+    return this.postAppsScript<SubmitResponse>('submit', {
+      submitDate: input.submitDate,
+      topic: input.topic,
+      employeeId: input.employeeId,
+      department: input.department,
+      ideaName: input.ideaName,
+      category: input.category,
+      currentState: input.currentState,
+      rootCause: input.rootCause,
+      benefit: input.benefit,
+      savingAmount: input.savingAmount,
+      beforeImage: input.beforeImage,
+      afterImage: input.afterImage,
+      honeypot: input.honeypot,
+      idempotencyKey: input.idempotencyKey,
+    });
   }
-
-  const payload = {
-    action: 'submit',
-    submitDate: input.submitDate,
-    topic: input.topic,
-    employeeId: input.employeeId,
-    department: input.department,
-    ideaName: input.ideaName,
-    category: input.category,
-    currentState: input.currentState,
-    rootCause: input.rootCause,
-    benefit: input.benefit,
-    savingAmount: input.savingAmount,
-    beforeImage: input.beforeImage,
-    afterImage: input.afterImage,
-    honeypot: input.honeypot,
-    idempotencyKey: input.idempotencyKey,
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Lỗi máy chủ (${res.status})`);
-  }
-
-  const result = await res.json();
-
-  if (!result.ok) {
-    throw new Error(
-      result.error?.message || 'Không gửi được ý tưởng Kaizen'
-    );
-  }
-
-  return result.data as SubmitResponse;
-}
-
 
   async trackKaizen(code: string, employeeId: string): Promise<KaizenTrackResult | null> {
-    const params = new URLSearchParams({
+    return this.postAppsScript<KaizenTrackResult | null>('track', {
       code: code.trim(),
       employeeId: employeeId.trim(),
     });
-    return this.request<KaizenTrackResult | null>(`/api/kaizen/track?${params.toString()}`);
   }
 
   async getKaizens(params: KaizenFilterParams): Promise<KaizenListResponse> {
-    const query = new URLSearchParams();
-    if (params.search) query.set('search', params.search);
-    if (params.department && params.department !== 'ALL') query.set('department', params.department);
-    if (params.category && params.category !== 'ALL') query.set('category', params.category);
-    if (params.status && params.status !== 'ALL') query.set('status', params.status);
-    if (params.completion && params.completion !== 'ALL') query.set('completion', params.completion);
-    if (params.scope && params.scope !== 'ALL') query.set('scope', params.scope);
-    if (params.quarter && params.quarter !== 'ALL') query.set('quarter', params.quarter);
-    if (params.startDate) query.set('startDate', params.startDate);
-    if (params.endDate) query.set('endDate', params.endDate);
-    if (params.quarterlyAwardOnly) query.set('quarterlyAwardOnly', 'true');
-    if (params.page) query.set('page', String(params.page));
-    if (params.pageSize) query.set('pageSize', String(params.pageSize));
-    if (params.sortBy) query.set('sortBy', params.sortBy);
-    if (params.sortOrder) query.set('sortOrder', params.sortOrder);
-
-    return this.request<KaizenListResponse>(`/api/kaizen?${query.toString()}`);
+    return this.postAppsScript<KaizenListResponse>('list', params, true);
   }
 
   async getKaizenById(id: string): Promise<KaizenItem | null> {
-    return this.request<KaizenItem | null>(`/api/kaizen/${id}`);
+    return this.postAppsScript<KaizenItem | null>('get', { id }, true);
   }
 
   async reviewKaizen(
     id: string,
     review: KaizenReviewInput,
-    _reviewerEmail: string
+    reviewerEmail: string
   ): Promise<KaizenItem> {
-    return this.request<KaizenItem>(`/api/kaizen/${id}/review`, {
-      method: 'PATCH',
-      body: JSON.stringify(review),
-    });
+    return this.postAppsScript<KaizenItem>(
+      'review',
+      {
+        id,
+        review,
+        reviewerEmail,
+      },
+      true
+    );
   }
 
   async deleteKaizen(id: string): Promise<boolean> {
-    const res = await fetch(`/api/kaizen/${id}`, {
-      method: 'DELETE',
-    });
-    return res.ok;
+    return this.postAppsScript<boolean>('delete', { id }, true);
   }
 
   async getStats(params?: KaizenFilterParams): Promise<KaizenStats> {
-    const query = new URLSearchParams();
-    if (params?.department && params.department !== 'ALL') query.set('department', params.department);
-    if (params?.category && params.category !== 'ALL') query.set('category', params.category);
-    if (params?.scope && params.scope !== 'ALL') query.set('scope', params.scope);
-    if (params?.quarter && params.quarter !== 'ALL') query.set('quarter', params.quarter);
-    if (params?.startDate) query.set('startDate', params.startDate);
-    if (params?.endDate) query.set('endDate', params.endDate);
-
-    return this.request<KaizenStats>(`/api/stats?${query.toString()}`);
+    return this.postAppsScript<KaizenStats>('stats', params || {}, true);
   }
 
   async exportCsv(params?: KaizenFilterParams): Promise<Blob> {
-    const query = new URLSearchParams();
-    if (params?.department && params.department !== 'ALL') query.set('department', params.department);
-    if (params?.category && params.category !== 'ALL') query.set('category', params.category);
-    if (params?.scope && params.scope !== 'ALL') query.set('scope', params.scope);
-    if (params?.quarter && params.quarter !== 'ALL') query.set('quarter', params.quarter);
+    const csvContent = await this.postAppsScript<string>('export', params || {}, true);
+    // Đảm bảo UTF-8 BOM cho Excel tiếng Việt
+    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+    return new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+  }
 
-    const res = await fetch(`/api/export?${query.toString()}`);
-    if (!res.ok) {
-      throw new Error('Lỗi xuất tệp Excel/CSV từ máy chủ');
+  async login(passcode: string, name?: string): Promise<LoginResponse> {
+    const res = await this.postAppsScript<LoginResponse>('login', {
+      passcode: passcode.trim(),
+      name: name?.trim(),
+    });
+
+    if (res && res.token) {
+      sessionStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({
+          token: res.token,
+          role: res.role,
+          name: res.name || name?.trim() || (res.role === 'admin' ? 'Quản trị viên' : 'Thẩm định viên'),
+          expiresAt: res.expiresAt || Date.now() + 6 * 60 * 60 * 1000,
+        })
+      );
     }
-    return res.blob();
+
+    return res;
+  }
+
+  async ping(): Promise<PingResponse> {
+    return this.postAppsScript<PingResponse>('ping', {});
   }
 
   async getCurrentUser(): Promise<UserPrincipal | null> {
     try {
-      const res = await fetch('/.auth/me');
-      if (!res.ok) return null;
-      const data = await res.json();
-      const principal = data?.clientPrincipal;
-      if (!principal) return null;
-
+      const raw = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.expiresAt && Date.now() > data.expiresAt) {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        return null;
+      }
       return {
-        identityProvider: principal.identityProvider,
-        userId: principal.userId,
-        userDetails: principal.userDetails,
-        userRoles: principal.userRoles || [],
+        identityProvider: 'passcode',
+        userId: data.token,
+        userDetails: data.name || (data.role === 'admin' ? 'Quản trị viên' : 'Thẩm định viên'),
+        userRoles: [data.role],
       };
     } catch {
       return null;

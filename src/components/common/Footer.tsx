@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, MapPin, HeartHandshake } from 'lucide-react';
+import { Shield, HeartHandshake, Activity } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { isReviewer, login, logout, user } = useAuth();
+  const { isReviewer, logout, user } = useAuth();
 
   return (
     <footer className="bg-white border-t border-slate-200 mt-auto text-xs text-slate-500">
@@ -44,15 +44,25 @@ export const Footer: React.FC = () => {
                     Đăng xuất ({user?.userDetails})
                   </button>
                 ) : (
-                  <button
-                    onClick={login}
+                  <Link
+                    to="/login"
                     className="inline-flex items-center gap-1.5 text-[#005EB8] hover:underline font-medium"
-                    title="Đăng nhập tài khoản Microsoft Entra ID công ty"
+                    title="Đăng nhập dành cho Reviewer / Admin"
                   >
                     <Shield className="w-3 h-3" />
                     Đăng nhập người thẩm định
-                  </button>
+                  </Link>
                 )}
+              </li>
+              <li className="pt-0.5">
+                <Link
+                  to="/diagnostics"
+                  className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Kiểm tra kết nối máy chủ Google Apps Script"
+                >
+                  <Activity className="w-3 h-3" />
+                  <span>Kiểm tra kết nối hệ thống</span>
+                </Link>
               </li>
             </ul>
           </div>

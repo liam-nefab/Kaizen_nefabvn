@@ -8,6 +8,8 @@ import {
   CATEGORIES,
   Department,
   Category,
+  normalizeCategory,
+  normalizeDepartment,
 } from '../constants/kaizen';
 import { apiClient } from '../services/api';
 import { compressImage, formatFileSize, formatVND } from '../services/imageCompression';
@@ -69,35 +71,19 @@ const kaizenSchema = z.object({
     .min(3, 'Mã nhân viên từ 3 đến 20 ký tự')
     .max(20, 'Mã nhân viên từ 3 đến 20 ký tự')
     .regex(/^[A-Za-z0-9_-]+$/, 'Mã nhân viên chỉ chứa chữ và số (VD: NF1024)'),
-  department: z.enum([
-    'Kinh doanh',
-    'Nhân sự & Thương hiệu',
-    'Sản xuất -Đài Loan',
-    'Sản xuất- Giấy',
-    'Sản xuất- Gỗ',
-    'Sản xuất- Nhựa',
-    'Tài chính - Kế toán',
-    'Thiết kế',
-    'Vận hành',
-    'Vận hành - Bảo trì',
-    'Vận hành - Chất lượng',
-    'Vận hành - Kho',
-    'Vận hành- CS',
-    'Vận hành- Planning',
-    'Vận hành- Pur',
-  ]),
+  department: z.custom<Department>(
+    (val) => DEPARTMENTS.includes(val as any),
+    { message: 'Vui lòng chọn bộ phận hợp lệ' }
+  ),
   ideaName: z
     .string()
     .trim()
     .min(5, 'Tên ý tưởng tối thiểu 5 ký tự')
     .max(150, 'Tên ý tưởng tối đa 150 ký tự'),
-  category: z.enum([
-    'Cải tiến dụng cụ/ máy móc',
-    'An toàn/ 5S',
-    'Năng suất',
-    'Chất lượng',
-    'Chuỗi cung ứng',
-  ]),
+  category: z.custom<Category>(
+    (val) => CATEGORIES.includes(val as any),
+    { message: 'Vui lòng chọn lĩnh vực cải tiến hợp lệ' }
+  ),
   currentState: z
     .string()
     .trim()
@@ -251,9 +237,9 @@ export const SubmitPage: React.FC = () => {
         submitDate: data.submitDate,
         topic: data.topic,
         employeeId: data.employeeId.toUpperCase(),
-        department: data.department as Department,
+        department: normalizeDepartment(data.department),
         ideaName: data.ideaName,
-        category: data.category as Category,
+        category: normalizeCategory(data.category),
         currentState: data.currentState,
         rootCause: data.rootCause,
         benefit: data.benefit,

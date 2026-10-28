@@ -22,6 +22,20 @@ export interface KaizenListResponse {
   totalPages: number;
 }
 
+export interface LoginResponse {
+  token: string;
+  role: 'reviewer' | 'admin';
+  name?: string;
+  expiresAt: number;
+}
+
+export interface PingResponse {
+  status: 'ok';
+  time: string;
+  version?: string;
+  configuredSheets?: boolean;
+}
+
 export interface IKaizenApiClient {
   /** Gửi ý tưởng Kaizen mới (Public) */
   submitKaizen(input: KaizenSubmitInput): Promise<SubmitResponse>;
@@ -47,6 +61,12 @@ export interface IKaizenApiClient {
   /** Xuất file CSV/Excel UTF-8 BOM (Admin) */
   exportCsv(params?: KaizenFilterParams): Promise<Blob>;
 
-  /** Lấy thông tin phiên đăng nhập hiện tại từ SWA hoặc Mock */
+  /** Lấy thông tin phiên đăng nhập hiện tại từ sessionStorage hoặc Mock */
   getCurrentUser(): Promise<UserPrincipal | null>;
+
+  /** Đăng nhập bằng mã Passcode (Reviewer/Admin) */
+  login(passcode: string, name?: string): Promise<LoginResponse>;
+
+  /** Kiểm tra kết nối đến Google Apps Script backend */
+  ping(): Promise<PingResponse>;
 }

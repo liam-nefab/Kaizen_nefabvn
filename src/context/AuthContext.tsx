@@ -9,7 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isLoading: boolean;
   isMock: boolean;
-  login: () => void;
+  login: (passcode: string, name?: string) => Promise<void>;
   logout: () => void;
   setMockRole: (role: AppRole) => void;
   refreshUser: () => Promise<void>;
@@ -65,21 +65,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   };
 
-  const login = () => {
-    if (isMockMode) {
-      setMockRole('reviewer');
-      return;
-    }
-    const currentPath = window.location.pathname || '/review';
-    window.location.href = `/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(currentPath)}`;
+  const login = async (passcode: string, name?: string): Promise<void> => {
+    const res = await apiClient.login(passcode, name);
+    setRole(res.role);
+    setUser({
+      identityProvider: 'passcode',
+      userId: res.token,
+      userDetails: res.name || (res.role === 'admin' ? 'Quản trị viên' : 'Thẩm định viên'),
+      userRoles: [res.role],
+    });
   };
 
   const logout = () => {
+    try {
+      sessionStorage.removeItem('nefab_kaizen_auth_v1');
+    } catch {
+      // ignore
+    }
     if (isMockMode) {
       setMockRole('public');
-      return;
+    } else {
+      setUser(null);
+      setRole('public');
     }
-    window.location.href = `/.auth/logout?post_logout_redirect_uri=/`;
   };
 
   const isReviewer = role === 'reviewer' || role === 'admin';

@@ -46,7 +46,7 @@ export const DEPARTMENTS = [
 export type Department = typeof DEPARTMENTS[number];
 
 /**
- * 5 Lĩnh vực Kaizen cải tiến
+ * 5 Lĩnh vực Kaizen cải tiến (Chuẩn hóa duy nhất - Canonical)
  */
 export const CATEGORIES = [
   'Cải tiến dụng cụ/ máy móc',
@@ -57,6 +57,70 @@ export const CATEGORIES = [
 ] as const;
 
 export type Category = typeof CATEGORIES[number];
+
+/**
+ * Mã khóa ổn định cho 5 lĩnh vực (tránh lệch chuỗi tiếng Việt khi gửi API/lưu trữ)
+ */
+export const CATEGORY_KEYS = {
+  TOOLS_MACHINES: 'Cải tiến dụng cụ/ máy móc',
+  SAFETY_5S: 'An toàn/ 5S',
+  PRODUCTIVITY: 'Năng suất',
+  QUALITY: 'Chất lượng',
+  SUPPLY_CHAIN: 'Chuỗi cung ứng',
+} as const;
+
+export type CategoryKey = keyof typeof CATEGORY_KEYS;
+
+/**
+ * Hàm chuẩn hóa chuỗi Lĩnh vực tiếng Việt (chống lệch khoảng trắng quanh '/', NFC/NFD, hoa/thường)
+ */
+export function normalizeCategory(raw?: string | null): Category {
+  if (!raw) return CATEGORIES[0];
+  const cleaned = raw
+    .normalize('NFC')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\s*\/\s*/g, '/ '); // chuẩn hóa khoảng trắng quanh dấu '/'
+
+  const lower = cleaned.toLowerCase();
+
+  if (lower.includes('dụng cụ') || lower.includes('dung cu') || lower.includes('máy móc') || lower.includes('may moc') || lower.includes('máy') || lower.includes('may')) {
+    return 'Cải tiến dụng cụ/ máy móc';
+  }
+  if (lower.includes('an toàn') || lower.includes('an toan') || lower.includes('5s')) {
+    return 'An toàn/ 5S';
+  }
+  if (lower.includes('năng suất') || lower.includes('nang suat')) {
+    return 'Năng suất';
+  }
+  if (lower.includes('chất lượng') || lower.includes('chat luong')) {
+    return 'Chất lượng';
+  }
+  if (lower.includes('chuỗi cung ứng') || lower.includes('chuoi cung ung') || lower.includes('cung ứng')) {
+    return 'Chuỗi cung ứng';
+  }
+
+  // Khớp chính xác nếu có
+  const match = CATEGORIES.find((c) => c.toLowerCase() === lower);
+  return match || CATEGORIES[0];
+}
+
+/**
+ * Hàm chuẩn hóa Bộ phận tiếng Việt
+ */
+export function normalizeDepartment(raw?: string | null): Department {
+  if (!raw) return DEPARTMENTS[0];
+  const cleaned = raw.normalize('NFC').trim().replace(/\s+/g, ' ');
+  const lower = cleaned.toLowerCase();
+
+  const match = DEPARTMENTS.find((d) => d.toLowerCase() === lower);
+  if (match) return match;
+
+  // Xử lý các biến thể dấu '-'
+  const simplified = lower.replace(/\s*-\s*/g, '-');
+  const matchHyphen = DEPARTMENTS.find((d) => d.toLowerCase().replace(/\s*-\s*/g, '-') === simplified);
+  return matchHyphen || DEPARTMENTS[0];
+}
 
 /**
  * 4 Phạm vi triển khai của Nefab Việt Nam
